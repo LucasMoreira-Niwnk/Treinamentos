@@ -1,4 +1,4 @@
-import { authorizedUser } from "../../../lib/auth";
+import { authorizedUser, displayNameFromEmail } from "../../../lib/auth";
 import { database, seedCourses } from "../../../lib/training";
 import { parseTrainingSteps } from "../../../lib/training-content";
 
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     for (const completion of passedCourses) passedByUser.set(completion.user_sub, [...(passedByUser.get(completion.user_sub) ?? []), completion]);
     const members = loggedUsers.map((member) => {
       const memberCourses = passedByUser.get(member.sub) ?? [];
-      return { name: member.name, email: member.email, lastSeenAt: member.last_seen_at, done: memberCourses.filter((course) => course.active).length, total: courses.length, courses: memberCourses.map(({ course_id, title, active, score, completed_at }) => ({ courseId: course_id, title, active: Boolean(active), score, completedAt: completed_at })) };
+      return { name: displayNameFromEmail(member.email), email: member.email, lastSeenAt: member.last_seen_at, done: memberCourses.filter((course) => course.active).length, total: courses.length, courses: memberCourses.map(({ course_id, title, active, score, completed_at }) => ({ courseId: course_id, title, active: Boolean(active), score, completedAt: completed_at })) };
     });
     return Response.json({ people, completion: possible ? Math.round(done / possible * 100) : 0, averageScore: scores?.average_score == null ? 0 : Math.round(scores.average_score), totalCompleted: done, totalPossible: possible, members, courses: courses.map((course) => ({ ...course, coverImage: course.cover_image, steps: parseTrainingSteps(course.lessons), completed: false, score: null })), courseStats }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Não foi possível carregar as métricas." }, { status: 503 }); }

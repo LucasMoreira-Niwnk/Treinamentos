@@ -2,6 +2,14 @@ export type PortalUser = { sub: string; name: string; email: string; admin: bool
 
 function envValue(name: string) { return process.env[name] ?? ""; }
 
+export function displayNameFromEmail(emailValue: string) {
+  const email = emailValue.trim();
+  const localPart = email.split("@", 1)[0] ?? "";
+  const parts = localPart.split(/[._-]+/).filter(Boolean);
+  if (!parts.length) return email;
+  return parts.map((part) => part.charAt(0).toLocaleUpperCase("pt-BR") + part.slice(1).toLocaleLowerCase("pt-BR")).join(" ");
+}
+
 function encode(value: Uint8Array) {
   let binary = "";
   for (let index = 0; index < value.length; index += 0x8000) binary += String.fromCharCode(...value.subarray(index, index + 0x8000));
@@ -76,11 +84,11 @@ function isAdmin(email: string) {
   return allowed.includes(email.toLowerCase());
 }
 
-export async function createSession(request: Request, emailValue: string, nameValue: string) {
+export async function createSession(request: Request, emailValue: string) {
   const email = emailValue.trim().toLowerCase();
   const domain = envValue("GOOGLE_WORKSPACE_DOMAIN").trim().toLowerCase();
   if (!email || !domain || email.split("@").at(-1) !== domain) throw new Error(`Use uma conta Google Workspace @${domain}.`);
-  const user: PortalUser = { sub: email, email, name: nameValue.trim() || email, admin: isAdmin(email) };
+  const user: PortalUser = { sub: email, email, name: displayNameFromEmail(email), admin: isAdmin(email) };
   const value = await seal({ ...user, expires: Date.now() + 7 * 24 * 60 * 60 * 1000 });
   const response = Response.json({ user: { name: user.name, email: user.email, admin: user.admin } });
   response.headers.append("Set-Cookie", `portal_session=${value}; ${secureCookie(request)}`);

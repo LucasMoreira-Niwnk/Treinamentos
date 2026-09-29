@@ -25,11 +25,8 @@ export async function POST(request: Request) {
     if (!profile) return failed(request, "failed");
     const rawProfile = profile as unknown as Record<string, unknown>;
     const email = profileText(rawProfile, "email", "mail", "nameID", "nameId");
-    const givenName = profileText(rawProfile, "firstName", "givenName", "given_name");
-    const familyName = profileText(rawProfile, "lastName", "sn", "surname", "family_name");
-    const fullName = profileText(rawProfile, "displayName", "name") || [givenName, familyName].filter(Boolean).join(" ") || email;
     if (!email) return failed(request, "failed");
-    const { response: sessionResponse, user } = await createSession(request, email, fullName);
+    const { response: sessionResponse, user } = await createSession(request, email);
     getDb().prepare("INSERT INTO portal_users (sub, name, email, last_seen_at) VALUES (?, ?, ?, ?) ON CONFLICT(sub) DO UPDATE SET name = excluded.name, email = excluded.email, last_seen_at = excluded.last_seen_at")
       .run(user.sub, user.name, user.email, Date.now());
     const response = new Response(null, { status: 303, headers: { Location: portalUrl("/").toString() } });
