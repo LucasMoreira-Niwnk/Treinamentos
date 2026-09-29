@@ -61,6 +61,10 @@ export default function Home() {
 
   useEffect(() => {
     let live = true;
+    const ssoStatus = new URLSearchParams(window.location.search).get("sso");
+    if (ssoStatus === "failed") setError("Não foi possível validar seu acesso. Inicie o login novamente ou fale com o administrador.");
+    if (ssoStatus === "not-configured") setError("O login SAML ainda precisa ser configurado pelo administrador do portal.");
+    if (ssoStatus) window.history.replaceState({}, "", window.location.pathname);
     fetch("/api/me", { cache: "no-store" }).then((r) => r.json()).then((data) => {
       if (live) setUser(data.user ?? null);
     }).catch(() => { if (live) setError("Não foi possível verificar o acesso. Tente novamente."); }).finally(() => { if (live) setLoading(false); });
@@ -72,28 +76,7 @@ export default function Home() {
     loadData().catch((e) => setError(e instanceof Error ? e.message : "Falha ao carregar os dados."));
   }, [user, loadData]);
 
-  const signIn = async () => {
-    setError(""); setBusy(true);
-    try {
-      const config = await fetch("/api/auth/config", { cache: "no-store" }).then((r) => r.json());
-      if (!config.clientId) throw new Error("O login ainda precisa ser configurado pelo administrador do portal.");
-      const nonceData = await fetch("/api/auth/nonce", { method: "POST" }).then((r) => r.json());
-      const w = window as typeof window & { google?: { accounts: { id: { initialize: (config: Record<string, unknown>) => void; prompt: () => void } } } };
-      const launch = () => w.google?.accounts.id.initialize({ client_id: config.clientId, nonce: nonceData.nonce, callback: async (result: { credential?: string }) => {
-        try {
-          const response = await fetch("/api/auth/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ credential: result.credential }) });
-          const data = await response.json();
-          if (!response.ok) throw new Error(data.error || "Não foi possível entrar com esta conta.");
-          setUser(data.user);
-        } catch (e) { setError(e instanceof Error ? e.message : "Falha ao entrar."); }
-        finally { setBusy(false); }
-      } });
-      const script = document.querySelector<HTMLScriptElement>("#google-identity");
-      if (w.google) { launch(); w.google.accounts.id.prompt(); }
-      else if (script) { script.onload = () => { launch(); w.google?.accounts.id.prompt(); }; }
-      else { const s = document.createElement("script"); s.id = "google-identity"; s.src = "https://accounts.google.com/gsi/client"; s.async = true; s.defer = true; s.onload = () => { launch(); w.google?.accounts.id.prompt(); }; s.onerror = () => { setError("Não foi possível carregar o Google Sign-In."); setBusy(false); }; document.head.appendChild(s); }
-    } catch (e) { setError(e instanceof Error ? e.message : "Falha ao iniciar o login."); setBusy(false); }
-  };
+  const signIn = () => { setError(""); setBusy(true); window.location.assign("/api/auth/saml/login"); };
 
   const completeCourse = async () => {
     if (!active || answers.length !== active.lessons.length) return;
@@ -139,7 +122,7 @@ export default function Home() {
       <div className="login-emblem"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></div>
       <p className="eyebrow">PORTAL DO COLABORADOR</p><h2>Bem-vindo de volta</h2><p className="login-subtitle">Entre para acessar seus treinamentos e acompanhar seu progresso.</p>
       <GoogleButton onSignIn={signIn} disabled={busy} />
-      {busy && <p className="signin-status">Aguardando autenticação do Google…</p>}
+      {busy && <p className="signin-status">Redirecionando para o login corporativo…</p>}
       {error && <p className="error-message" role="alert">{error}</p>}
       <div className="login-divider"><span>ACESSO SEGURO</span></div><p className="domain-note"><span className="lock-dot">⌑</span> Use seu e-mail corporativo <strong>@casaeterra.com</strong></p>
       <div className="login-feature"><div><span className="feature-symbol symbol-green"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg></span><span>Treinamentos práticos<small>Aprenda no seu ritmo</small></span></div><div><span className="feature-symbol symbol-sand"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></span><span>Seu progresso salvo<small>Acompanhe cada etapa</small></span></div></div>
