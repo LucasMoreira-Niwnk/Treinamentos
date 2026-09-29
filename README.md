@@ -32,6 +32,7 @@ O Google Workspace atua como provedor de identidade (IdP); o portal é o provedo
    SESSION_SECRET=gere-uma-chave-aleatoria-com-pelo-menos-32-caracteres
    ADMIN_EMAILS=lucas.salomao@casaeterra.com,Uarlei.silva@casaeterra.com
    DATABASE_PATH=/var/lib/treinamentos/treinamentos.sqlite
+   UPLOADS_PATH=/var/lib/treinamentos/uploads
    APP_BASE_URL=https://treinamentos.casaeterra.com
    SAML_SP_ENTITY_ID=https://treinamentos.casaeterra.com/saml/metadata
    SAML_ACS_URL=https://treinamentos.casaeterra.com/api/auth/saml/acs
@@ -61,7 +62,7 @@ Os comandos abaixo assumem que o repositório foi criado no GitHub e que Node.js
    command -v node
    sudo adduser --system --group --home /var/lib/treinamentos --no-create-home treinamentos
    sudo install -d -o treinamentos -g treinamentos /opt/treinamentos
-   sudo install -d -o treinamentos -g treinamentos /var/lib/treinamentos
+   sudo install -d -o treinamentos -g treinamentos /var/lib/treinamentos /var/lib/treinamentos/uploads
    sudo install -d -o root -g treinamentos -m 0750 /etc/treinamentos
    ```
 
@@ -106,6 +107,8 @@ Os comandos abaixo assumem que o repositório foi criado no GitHub e que Node.js
    sudo systemctl reload nginx
    ```
 
+   A configuração do Nginx permite solicitações de até 105 MB para aceitar vídeos de até 100 MB. Se já houver outro limite definido no servidor, ajuste `client_max_body_size` no bloco HTTPS e recarregue o Nginx.
+
    O DNS de `treinamentos.casaeterra.com` precisa apontar para o servidor. A renovação do certificado continua sob responsabilidade do processo que já administra esses certificados na VM.
 
 ## Atualizar uma versão
@@ -118,7 +121,7 @@ sudo -u treinamentos bash -lc 'set -a; source /etc/treinamentos/portal.env; set 
 sudo systemctl restart treinamentos
 ```
 
-Faça cópias regulares de `/var/lib/treinamentos/treinamentos.sqlite`. Os arquivos `-wal` e `-shm` são auxiliares do SQLite; para backup consistente com o portal em uso, pare o serviço antes de copiar o banco.
+Faça cópias regulares de `/var/lib/treinamentos/treinamentos.sqlite` e `/var/lib/treinamentos/uploads`, pois as imagens e vídeos dos treinamentos ficam nessa pasta. Os arquivos `-wal` e `-shm` são auxiliares do SQLite; para backup consistente com o portal em uso, pare o serviço antes de copiar o banco.
 
 ## Desenvolvimento local
 

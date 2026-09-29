@@ -1,4 +1,4 @@
-import type { TrainingStep } from "./training-content";
+import type { TrainingMedia, TrainingStep } from "./training-content";
 
 export type CourseInput = { title: string; description: string; category: string; duration: number; steps: TrainingStep[] };
 
@@ -23,7 +23,19 @@ export function parseCourseInput(value: unknown): CourseInput | null {
       const heading = typeof step.title === "string" ? step.title.trim() : "";
       const content = typeof step.content === "string" ? step.content.trim() : "";
       if (!heading || heading.length > 100 || !content || content.length > 5000) return null;
-      steps.push({ id, type: "content", title: heading, content });
+      const mediaPayload = step.media === undefined ? [] : step.media;
+      if (!Array.isArray(mediaPayload) || mediaPayload.length > 10) return null;
+      const media: TrainingMedia[] = [];
+      for (const rawMedia of mediaPayload) {
+        if (!rawMedia || typeof rawMedia !== "object") return null;
+        const item = rawMedia as Record<string, unknown>;
+        const url = typeof item.url === "string" ? item.url : "";
+        const name = typeof item.name === "string" ? item.name.trim().slice(0, 255) : "";
+        const kind = item.kind;
+        if (!/^\/api\/uploads\/[0-9a-f-]{36}\.(?:png|jpe?g|webp|gif|mp4|webm)$/i.test(url) || !name || (kind !== "image" && kind !== "video")) return null;
+        media.push({ url, name, kind });
+      }
+      steps.push({ id, type: "content", title: heading, content, ...(media.length ? { media } : {}) });
     } else if (step.type === "quiz") {
       const question = typeof step.question === "string" ? step.question.trim() : "";
       const options = Array.isArray(step.options) ? step.options.map((option) => typeof option === "string" ? option.trim() : "") : [];

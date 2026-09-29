@@ -1,4 +1,5 @@
-export type ContentStep = { id: string; type: "content"; title: string; content: string };
+export type TrainingMedia = { url: string; kind: "image" | "video"; name: string };
+export type ContentStep = { id: string; type: "content"; title: string; content: string; media?: TrainingMedia[] };
 export type QuizStep = { id: string; type: "quiz"; question: string; options: string[]; correctAnswer: number; explanation?: string };
 export type TrainingStep = ContentStep | QuizStep;
 
