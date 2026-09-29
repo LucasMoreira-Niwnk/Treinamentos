@@ -27,14 +27,20 @@ Gere um segredo com `openssl rand -hex 32`. Mantenha esse arquivo fora do Git e 
 
 ## Instalar no Ubuntu
 
-Os comandos abaixo assumem que o repositório foi criado no GitHub e que Node.js 22.13 ou mais recente está disponível em `/usr/bin/node`. Consulte a [página oficial de downloads do Node.js](https://nodejs.org/en/download) para instalar uma versão LTS compatível e confirme com `node -v`, `npm -v` e `command -v node`.
+Os comandos abaixo assumem que o repositório foi criado no GitHub e que Node.js LTS 22.13 ou mais recente está disponível em `/usr/bin/node`. No Ubuntu, a documentação do NodeSource apresenta a instalação LTS via APT. Depois confirme com `node -v`, `npm -v` e `command -v node`.
 
 1. Instale os pacotes do sistema e crie as pastas:
 
    ```bash
    sudo apt update
-   sudo apt install -y git nginx certbot python3-certbot-nginx
-   sudo adduser --system --group --no-create-home treinamentos
+   sudo apt install -y curl git nginx certbot python3-certbot-nginx
+   curl -fsSL https://deb.nodesource.com/setup_lts.x -o /tmp/nodesource_setup.sh
+   sudo -E bash /tmp/nodesource_setup.sh
+   sudo apt install -y nodejs
+   node -v
+   npm -v
+   command -v node
+   sudo adduser --system --group --home /var/lib/treinamentos --no-create-home treinamentos
    sudo install -d -o treinamentos -g treinamentos /opt/treinamentos
    sudo install -d -o treinamentos -g treinamentos /var/lib/treinamentos
    sudo install -d -o root -g treinamentos -m 0750 /etc/treinamentos
@@ -58,7 +64,7 @@ Os comandos abaixo assumem que o repositório foi criado no GitHub e que Node.js
 
    ```bash
    cd /opt/treinamentos
-   sudo -u treinamentos npm ci
+   sudo -u treinamentos env HOME=/var/lib/treinamentos npm_config_cache=/var/lib/treinamentos/.npm npm ci
    sudo -u treinamentos bash -lc 'set -a; source /etc/treinamentos/portal.env; set +a; cd /opt/treinamentos; npm run db:migrate; npm run build'
    ```
 
@@ -86,7 +92,7 @@ Os comandos abaixo assumem que o repositório foi criado no GitHub e que Node.js
 ```bash
 cd /opt/treinamentos
 sudo -u treinamentos git pull --ff-only
-sudo -u treinamentos npm ci
+sudo -u treinamentos env HOME=/var/lib/treinamentos npm_config_cache=/var/lib/treinamentos/.npm npm ci
 sudo -u treinamentos bash -lc 'set -a; source /etc/treinamentos/portal.env; set +a; cd /opt/treinamentos; npm run db:migrate; npm run build'
 sudo systemctl restart treinamentos
 ```

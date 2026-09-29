@@ -9,6 +9,7 @@ Group=treinamentos
 WorkingDirectory=/opt/treinamentos
 EnvironmentFile=/etc/treinamentos/portal.env
 Environment=NODE_ENV=production
+Environment=HOME=/var/lib/treinamentos
 ExecStart=/usr/bin/node --experimental-sqlite ./node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3000
 Restart=on-failure
 RestartSec=5
