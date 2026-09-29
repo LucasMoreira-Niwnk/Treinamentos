@@ -1,7 +1,8 @@
 import type { DatabaseSync } from "node:sqlite";
 import { getDb } from "../db";
+import { parseTrainingSteps, type TrainingStep } from "./training-content";
 
-export type Course = { id: string; title: string; description: string; category: string; duration: number; lessons: string[]; active: number; created_at: number };
+export type Course = { id: string; title: string; description: string; category: string; duration: number; steps: TrainingStep[]; active: number; created_at: number };
 
 const starterCourses = [
   { title: "Equipamentos de proteção", description: "Escolha, uso e conservação dos EPIs na rotina de trabalho.", category: "EPIs", duration: 12, lessons: ["Escolha do equipamento|Confira o risco da atividade e use o EPI indicado para aquela tarefa.", "Uso correto e ajuste|Ajuste o equipamento antes de iniciar e verifique se está íntegro.", "Conservação e troca|Limpe, guarde no local correto e peça a substituição de itens danificados."] },
@@ -32,6 +33,6 @@ export async function seedCourses(db: DatabaseSync) {
 export async function listCoursesForUser(db: DatabaseSync, sub: string) {
   await seedCourses(db);
   const result = db.prepare("SELECT c.id, c.title, c.description, c.category, c.duration, c.lessons, c.active, c.created_at, p.score, p.completed_at FROM training_courses c LEFT JOIN training_completions p ON p.course_id = c.id AND p.user_sub = ? WHERE c.active = 1 ORDER BY c.created_at, c.id")
-    .all(sub) as unknown as (Omit<Course, "lessons"> & { lessons: string; score: number | null; completed_at: number | null })[];
-  return result.map((course) => ({ ...course, lessons: JSON.parse(course.lessons) as string[], completed: course.completed_at !== null }));
+    .all(sub) as unknown as (Omit<Course, "steps"> & { lessons: string; score: number | null; completed_at: number | null })[];
+  return result.map((course) => ({ ...course, steps: parseTrainingSteps(course.lessons), completed: course.score !== null && course.score >= 75 }));
 }

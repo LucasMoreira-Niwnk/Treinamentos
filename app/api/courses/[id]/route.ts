@@ -12,9 +12,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   try {
     const { id } = await context.params;
     const input = parseCourseInput(await request.json());
-    if (!input) return Response.json({ error: "Confira os dados do treinamento e as três etapas." }, { status: 400 });
+    if (!input) return Response.json({ error: "Confira os dados e as etapas do treinamento." }, { status: 400 });
     const result = database().prepare("UPDATE training_courses SET title = ?, description = ?, category = ?, duration = ?, lessons = ? WHERE id = ? AND active = 1")
-      .run(input.title, input.description, input.category, input.duration, JSON.stringify(input.lessons), id);
+      .run(input.title, input.description, input.category, input.duration, JSON.stringify(input.steps), id);
     if (result.changes === 0) return Response.json({ error: "Treinamento não encontrado ou inativo." }, { status: 404 });
     return Response.json({ ok: true });
   } catch (error) {

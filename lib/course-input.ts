@@ -1,4 +1,6 @@
-export type CourseInput = { title: string; description: string; category: string; duration: number; lessons: string[] };
+import type { TrainingStep } from "./training-content";
+
+export type CourseInput = { title: string; description: string; category: string; duration: number; steps: TrainingStep[] };
 
 export function parseCourseInput(value: unknown): CourseInput | null {
   if (!value || typeof value !== "object") return null;
@@ -7,12 +9,31 @@ export function parseCourseInput(value: unknown): CourseInput | null {
   const description = typeof payload.description === "string" ? payload.description.trim() : "";
   const category = typeof payload.category === "string" ? payload.category.trim() : "";
   const duration = Number(payload.duration);
-  const lessons = payload.lessons === undefined
-    ? [`Conteúdo principal|${description}`, "Aplicação segura|Siga o procedimento da sua unidade para aplicar esta orientação.", "Confirmação de aprendizado|Se não tiver certeza do procedimento, procure seu responsável antes de agir."]
-    : payload.lessons;
+  if (!title || title.length > 100 || !description || description.length > 240 || !category || category.length > 40 || !Number.isInteger(duration) || duration < 1 || duration > 240 || !Array.isArray(payload.steps) || payload.steps.length < 2 || payload.steps.length > 40) return null;
 
-  if (!title || title.length > 100 || !description || description.length > 240 || !category || category.length > 40 || !Number.isInteger(duration) || duration < 1 || duration > 240 || !Array.isArray(lessons) || lessons.length !== 3) return null;
-  if (lessons.some((lesson) => typeof lesson !== "string" || !lesson.includes("|") || lesson.split("|")[0].trim().length < 1 || lesson.split("|")[0].trim().length > 100 || lesson.slice(lesson.indexOf("|") + 1).trim().length < 1 || lesson.slice(lesson.indexOf("|") + 1).trim().length > 500)) return null;
+  const steps: TrainingStep[] = [];
+  const ids = new Set<string>();
+  for (const raw of payload.steps) {
+    if (!raw || typeof raw !== "object") return null;
+    const step = raw as Record<string, unknown>;
+    const candidateId = typeof step.id === "string" ? step.id.trim().slice(0, 80) : "";
+    const id = candidateId && !ids.has(candidateId) ? candidateId : crypto.randomUUID();
+    ids.add(id);
+    if (step.type === "content") {
+      const heading = typeof step.title === "string" ? step.title.trim() : "";
+      const content = typeof step.content === "string" ? step.content.trim() : "";
+      if (!heading || heading.length > 100 || !content || content.length > 5000) return null;
+      steps.push({ id, type: "content", title: heading, content });
+    } else if (step.type === "quiz") {
+      const question = typeof step.question === "string" ? step.question.trim() : "";
+      const options = Array.isArray(step.options) ? step.options.map((option) => typeof option === "string" ? option.trim() : "") : [];
+      const correctAnswer = step.correctAnswer;
+      const explanation = typeof step.explanation === "string" ? step.explanation.trim() : "";
+      if (!question || question.length > 500 || options.length < 2 || options.length > 5 || options.some((option) => !option || option.length > 300) || !Number.isInteger(correctAnswer) || Number(correctAnswer) < 0 || Number(correctAnswer) >= options.length || explanation.length > 500) return null;
+      steps.push({ id, type: "quiz", question, options, correctAnswer: Number(correctAnswer), ...(explanation ? { explanation } : {}) });
+    } else return null;
+  }
 
-  return { title, description, category, duration, lessons: lessons as string[] };
+  if (steps[0]?.type !== "content" || steps.at(-1)?.type !== "quiz" || !steps.some((step) => step.type === "content") || !steps.some((step) => step.type === "quiz")) return null;
+  return { title, description, category, duration, steps };
 }

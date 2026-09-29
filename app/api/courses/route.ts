@@ -19,11 +19,11 @@ export async function POST(request: Request) {
   try {
     const input = parseCourseInput(await request.json());
     if (!input) {
-      return Response.json({ error: "Confira os dados do treinamento e preencha suas três etapas." }, { status: 400 });
+      return Response.json({ error: "Confira os dados e as etapas. Inclua conteúdo, perguntas e uma alternativa correta em cada quiz." }, { status: 400 });
     }
     const db = database();
     db.prepare("INSERT INTO training_courses (id, title, description, category, duration, lessons, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)")
-      .run(crypto.randomUUID(), input.title, input.description, input.category, input.duration, JSON.stringify(input.lessons), Date.now());
+      .run(crypto.randomUUID(), input.title, input.description, input.category, input.duration, JSON.stringify(input.steps), Date.now());
     return Response.json({ ok: true }, { status: 201 });
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Não foi possível cadastrar o treinamento." }, { status: 503 }); }
 }
