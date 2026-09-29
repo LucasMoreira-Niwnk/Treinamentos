@@ -143,3 +143,30 @@ table tbody tr:hover{background:#f8fafc}
 .modal-close{border-radius:5px}
 @media(max-width:760px){.login-page{grid-template-columns:1fr}.login-art{min-height:310px;padding:22px 24px}.art-copy{margin-top:36px;margin-bottom:0}.art-copy h1{font-size:32px}.art-orbit{top:15%;right:3%;width:210px;transform:translate(36%,2%);opacity:.23}.orbit-wordmark{font-size:58px}.login-main{min-height:545px;padding:32px 24px 17px}.login-card{margin:auto}.sidebar{border-bottom:1px solid #304151;background:#162433}.sidebar .brand{color:#fff}.sidebar .brand small{display:none}.nav-item{color:#d0dae3}.nav-item.selected{background:#25415a;color:#fff}.workspace-top{background:#fff}.content-area{padding-top:26px}}
 @media(max-width:480px){.login-art{min-height:270px;padding:18px 19px}.art-copy{margin-top:28px}.art-copy h1{font-size:28px}.art-orbit{right:0;width:165px}.orbit-wordmark{font-size:44px}.login-card{padding:25px 21px}.login-card h2{font-size:27px}}
+.course-management{width:min(1224px,calc(100% - 96px));margin:28px auto 0}
+.management-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:14px}
+.management-heading h2{margin:5px 0 3px;color:#1c2836;font-size:18px;letter-spacing:-.025em}
+.management-heading>div>p:last-child{margin:0;color:#718196;font-size:12px}
+.management-list{overflow:hidden;border:1px solid #d7e0e9;border-radius:6px;background:#fff}
+.management-course{display:flex;min-height:62px;align-items:center;gap:13px;padding:10px 16px;border-bottom:1px solid #e5eaf0}
+.management-course:last-child{border-bottom:0}
+.management-course-icon{display:grid;width:34px;height:34px;flex:none;place-items:center;border-radius:5px;background:#e8f1f7;color:#0b5e90}
+.management-course-icon svg{width:17px;height:17px}
+.management-course-copy{display:flex;min-width:0;flex:1;flex-direction:column;gap:2px}
+.management-course-copy strong{overflow:hidden;color:#263445;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.management-course-copy span{color:#718196;font-size:10px}
+.table-action{padding:6px 12px;border:1px solid #cbd9e5;border-radius:4px;background:#f6f9fb;color:#145d89;font-size:11px;font-weight:700}
+.table-action:hover{border-color:#72a5c4;background:#eaf3f9}
+.metrics-area>.page-heading .secondary-button{display:none}
+.course-edit-modal{max-height:calc(100svh - 40px);overflow-y:auto}
+.course-edit-modal h2{font-family:Inter,"Aptos","Segoe UI",sans-serif;font-size:23px;font-weight:750;letter-spacing:-.035em;color:#172536}
+.lesson-editor-list{display:grid;gap:9px;margin-top:17px}
+.lesson-editor{min-width:0;margin:0;padding:12px;border:1px solid #dfe6ed;border-radius:5px}
+.lesson-editor legend{padding:0 6px;color:#145d89;font-size:11px;font-weight:750}
+.lesson-editor label{margin-top:8px}
+.lesson-editor textarea{min-height:68px}
+.edit-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
+.edit-modal-actions .primary-button{margin-top:0}
+.cancel-button{padding:0 15px;border:1px solid #cbd6e0;border-radius:5px;background:#fff;color:#53677a;font-size:12px;font-weight:650}
+.cancel-button:hover{background:#f4f7fa}
+@media(max-width:760px){.course-management{width:calc(100% - 38px);margin-top:20px}.management-heading{align-items:flex-start}.management-heading h2{font-size:16px}.management-heading .secondary-button{flex:none}.management-course{padding:9px 11px}.course-edit-modal{max-height:calc(100svh - 24px);padding:22px 17px}.lesson-editor{padding:9px}.edit-modal-actions .primary-button{min-height:40px}}
