@@ -14,6 +14,7 @@ export const courses = sqliteTable("training_courses", {
   category: text("category").notNull(),
   duration: integer("duration").notNull(),
   lessons: text("lessons").notNull(),
+  coverImage: text("cover_image").notNull().default(""),
   active: integer("active").notNull().default(1),
   createdAt: integer("created_at").notNull(),
 });

@@ -1,6 +1,6 @@
 import type { TrainingMedia, TrainingStep } from "./training-content";
 
-export type CourseInput = { title: string; description: string; category: string; duration: number; steps: TrainingStep[] };
+export type CourseInput = { title: string; description: string; category: string; duration: number; coverImage: string; steps: TrainingStep[] };
 
 export function parseCourseInput(value: unknown): CourseInput | null {
   if (!value || typeof value !== "object") return null;
@@ -9,7 +9,8 @@ export function parseCourseInput(value: unknown): CourseInput | null {
   const description = typeof payload.description === "string" ? payload.description.trim() : "";
   const category = typeof payload.category === "string" ? payload.category.trim() : "";
   const duration = Number(payload.duration);
-  if (!title || title.length > 100 || !description || description.length > 240 || !category || category.length > 40 || !Number.isInteger(duration) || duration < 1 || duration > 240 || !Array.isArray(payload.steps) || payload.steps.length < 2 || payload.steps.length > 40) return null;
+  const coverImage = typeof payload.coverImage === "string" ? payload.coverImage.trim() : "";
+  if (!title || title.length > 100 || !description || description.length > 240 || !category || category.length > 40 || !Number.isInteger(duration) || duration < 1 || duration > 240 || (coverImage && !/^\/api\/uploads\/[0-9a-f-]{36}\.(?:png|jpe?g|webp|gif)$/i.test(coverImage)) || !Array.isArray(payload.steps) || payload.steps.length < 2 || payload.steps.length > 40) return null;
 
   const steps: TrainingStep[] = [];
   const ids = new Set<string>();
@@ -47,5 +48,5 @@ export function parseCourseInput(value: unknown): CourseInput | null {
   }
 
   if (steps[0]?.type !== "content" || steps.at(-1)?.type !== "quiz" || !steps.some((step) => step.type === "content") || !steps.some((step) => step.type === "quiz")) return null;
-  return { title, description, category, duration, steps };
+  return { title, description, category, duration, coverImage, steps };
 }
