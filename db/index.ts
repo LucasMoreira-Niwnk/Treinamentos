@@ -1,13 +1,15 @@
-import { env } from "cloudflare:workers";
-import { drizzle } from "drizzle-orm/d1";
-import * as schema from "./schema";
+import { mkdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { DatabaseSync } from "node:sqlite";
+
+let connection: DatabaseSync | undefined;
 
 export function getDb() {
-  if (!env.DB) {
-    throw new Error(
-      "Cloudflare D1 binding `DB` is unavailable. Set the `d1` field in .openai/hosting.json to `DB` or let your control plane inject the real binding values before using the database."
-    );
-  }
+  if (connection) return connection;
 
-  return drizzle(env.DB, { schema });
+  const databasePath = resolve(/* turbopackIgnore: true */ process.env.DATABASE_PATH || ".data/treinamentos.sqlite");
+  mkdirSync(dirname(databasePath), { recursive: true });
+  connection = new DatabaseSync(databasePath);
+  connection.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
+  return connection;
 }

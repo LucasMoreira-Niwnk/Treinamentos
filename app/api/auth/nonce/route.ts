@@ -1,5 +1,7 @@
 import { createNonce, isAuthConfigured } from "../../../../lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   if (!isAuthConfigured()) return Response.json({ error: "O login ainda precisa ser configurado pelo administrador do portal." }, { status: 503 });
   try { return await createNonce(request); }

@@ -1,5 +1,8 @@
 import { createSession, isAuthConfigured, sessionCookie } from "../../../../lib/auth";
-import { env } from "cloudflare:workers";
+import { getDb } from "../../../../db";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   if (!isAuthConfigured()) return Response.json({ error: "O login ainda precisa ser configurado pelo administrador do portal." }, { status: 503 });
@@ -7,9 +10,8 @@ export async function POST(request: Request) {
     const payload = await request.json() as { credential?: string };
     if (!payload.credential) return Response.json({ error: "Credencial Google ausente." }, { status: 400 });
     const { response, user } = await createSession(request, payload.credential);
-    if (!env.DB) return Response.json({ error: "O portal está aguardando a conexão com o banco de dados." }, { status: 503 });
-    await env.DB.prepare("INSERT INTO portal_users (sub, name, email, last_seen_at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(sub) DO UPDATE SET name = excluded.name, email = excluded.email, last_seen_at = excluded.last_seen_at")
-      .bind(user.sub, user.name, user.email, Date.now()).run();
+    getDb().prepare("INSERT INTO portal_users (sub, name, email, last_seen_at) VALUES (?, ?, ?, ?) ON CONFLICT(sub) DO UPDATE SET name = excluded.name, email = excluded.email, last_seen_at = excluded.last_seen_at")
+      .run(user.sub, user.name, user.email, Date.now());
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Não foi possível validar sua conta.";

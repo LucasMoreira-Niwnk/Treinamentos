@@ -1,0 +1,22 @@
+[Unit]
+Description=Portal de treinamentos Casa & Terra
+After=network.target
+
+[Service]
+Type=simple
+User=treinamentos
+Group=treinamentos
+WorkingDirectory=/opt/treinamentos
+EnvironmentFile=/etc/treinamentos/portal.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node --experimental-sqlite ./node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3000
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/treinamentos /opt/treinamentos/.next
+
+[Install]
+WantedBy=multi-user.target

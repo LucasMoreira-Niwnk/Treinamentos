@@ -1,6 +1,9 @@
 import { authorizedUser } from "../../../lib/auth";
 import { database } from "../../../lib/training";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   const { user, response } = await authorizedUser(request);
   if (response) return response;
@@ -10,12 +13,12 @@ export async function POST(request: Request) {
       return Response.json({ error: "Responda às três questões para concluir o treinamento." }, { status: 400 });
     }
     const db = database();
-    const course = await db.prepare("SELECT id, lessons FROM training_courses WHERE id = ?1 AND active = 1").bind(payload.courseId).first<{ id: string; lessons: string }>();
+    const course = db.prepare("SELECT id, lessons FROM training_courses WHERE id = ? AND active = 1").get(payload.courseId) as { id: string; lessons: string } | undefined;
     if (!course) return Response.json({ error: "Este treinamento não está mais disponível." }, { status: 404 });
     if ((JSON.parse(course.lessons) as unknown[]).length !== payload.answers.length) return Response.json({ error: "A avaliação do treinamento foi atualizada. Recarregue a página." }, { status: 409 });
     const score = Math.round(payload.answers.filter((answer) => answer === 0).length / payload.answers.length * 100);
-    await db.prepare("INSERT INTO training_completions (user_sub, course_id, user_email, score, completed_at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT(user_sub, course_id) DO UPDATE SET user_email = excluded.user_email, score = excluded.score, completed_at = excluded.completed_at")
-      .bind(user!.sub, course.id, user!.email, score, Date.now()).run();
+    db.prepare("INSERT INTO training_completions (user_sub, course_id, user_email, score, completed_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_sub, course_id) DO UPDATE SET user_email = excluded.user_email, score = excluded.score, completed_at = excluded.completed_at")
+      .run(user!.sub, course.id, user!.email, score, Date.now());
     return Response.json({ score }, { status: 201 });
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Não foi possível salvar a avaliação." }, { status: 503 }); }
 }

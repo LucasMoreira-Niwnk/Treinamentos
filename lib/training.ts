@@ -1,4 +1,5 @@
-import { env } from "cloudflare:workers";
+import type { DatabaseSync } from "node:sqlite";
+import { getDb } from "../db";
 
 export type Course = { id: string; title: string; description: string; category: string; duration: number; lessons: string[]; active: number; created_at: number };
 
@@ -10,22 +11,27 @@ const starterCourses = [
 ];
 
 export function database() {
-  if (!env.DB) throw new Error("Banco de dados indisponível. Configure o banco D1 do portal.");
-  return env.DB;
+  return getDb();
 }
 
-export async function seedCourses(db: D1Database) {
-  const row = await db.prepare("SELECT COUNT(*) AS total FROM training_courses WHERE active = 1").first<{ total: number }>();
+export async function seedCourses(db: DatabaseSync) {
+  const row = db.prepare("SELECT COUNT(*) AS total FROM training_courses WHERE active = 1").get() as { total: number } | undefined;
   if ((row?.total ?? 0) > 0) return;
   const now = Date.now();
-  await db.batch(starterCourses.map((course, index) => db.prepare("INSERT INTO training_courses (id, title, description, category, duration, lessons, active, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?7)")
-    .bind(`base-${index + 1}`, course.title, course.description, course.category, course.duration, JSON.stringify(course.lessons), now)));
+  const insert = db.prepare("INSERT INTO training_courses (id, title, description, category, duration, lessons, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)");
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    starterCourses.forEach((course, index) => insert.run(`base-${index + 1}`, course.title, course.description, course.category, course.duration, JSON.stringify(course.lessons), now));
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
-export async function listCoursesForUser(db: D1Database, sub: string) {
+export async function listCoursesForUser(db: DatabaseSync, sub: string) {
   await seedCourses(db);
-  const result = await db.prepare("SELECT c.id, c.title, c.description, c.category, c.duration, c.lessons, c.active, c.created_at, p.score, p.completed_at FROM training_courses c LEFT JOIN training_completions p ON p.course_id = c.id AND p.user_sub = ?1 WHERE c.active = 1 ORDER BY c.created_at, c.id")
-    .bind(sub).all<Course & { score: number | null; completed_at: number | null }>();
-  return result.results.map((course) => ({ ...course, lessons: JSON.parse(course.lessons) as string[], completed: course.completed_at !== null }));
+  const result = db.prepare("SELECT c.id, c.title, c.description, c.category, c.duration, c.lessons, c.active, c.created_at, p.score, p.completed_at FROM training_courses c LEFT JOIN training_completions p ON p.course_id = c.id AND p.user_sub = ? WHERE c.active = 1 ORDER BY c.created_at, c.id")
+    .all(sub) as unknown as (Omit<Course, "lessons"> & { lessons: string; score: number | null; completed_at: number | null })[];
+  return result.map((course) => ({ ...course, lessons: JSON.parse(course.lessons) as string[], completed: course.completed_at !== null }));
 }
-

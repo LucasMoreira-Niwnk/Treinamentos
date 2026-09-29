@@ -1,6 +1,8 @@
-import { env } from "cloudflare:workers";
 import { authorizedUser } from "../../../lib/auth";
 import { database, listCoursesForUser } from "../../../lib/training";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const { user, response } = await authorizedUser(request);
@@ -23,8 +25,8 @@ export async function POST(request: Request) {
       return Response.json({ error: "Confira o título, a descrição, a categoria e a duração do treinamento." }, { status: 400 });
     }
     const db = database();
-    await db.prepare("INSERT INTO training_courses (id, title, description, category, duration, lessons, active, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?7)")
-      .bind(crypto.randomUUID(), title, description, category, duration, JSON.stringify([`Conteúdo principal|${description}`, "Aplicação segura|Siga o procedimento da sua unidade para aplicar esta orientação.", "Confirmação de aprendizado|Se não tiver certeza do procedimento, procure seu responsável antes de agir."]), Date.now()).run();
+    db.prepare("INSERT INTO training_courses (id, title, description, category, duration, lessons, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)")
+      .run(crypto.randomUUID(), title, description, category, duration, JSON.stringify([`Conteúdo principal|${description}`, "Aplicação segura|Siga o procedimento da sua unidade para aplicar esta orientação.", "Confirmação de aprendizado|Se não tiver certeza do procedimento, procure seu responsável antes de agir."]), Date.now());
     return Response.json({ ok: true }, { status: 201 });
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Não foi possível cadastrar o treinamento." }, { status: 503 }); }
 }

@@ -1,9 +1,7 @@
-import { env } from "cloudflare:workers";
-
 export type PortalUser = { sub: string; name: string; email: string; admin: boolean };
 
 type GoogleClaims = { iss?: string; aud?: string; exp?: number; iat?: number; sub?: string; email?: string; email_verified?: boolean; name?: string; hd?: string; nonce?: string };
-type Jwks = { keys: JsonWebKey[] };
+type Jwks = { keys: (JsonWebKey & { kid?: string })[] };
 let cachedJwks: { value: Jwks; expiresAt: number } | undefined;
 
 function encode(value: Uint8Array) {
@@ -17,9 +15,8 @@ function decode(value: string) {
   return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
 }
 
-function envValue(name: keyof typeof env) {
-  const value = env[name];
-  return typeof value === "string" ? value : "";
+function envValue(name: string) {
+  return process.env[name] ?? "";
 }
 
 export function isAuthConfigured() {
@@ -36,7 +33,8 @@ function cookie(request: Request, name: string) {
 }
 
 function setCookie(name: string, value: string, request: Request, maxAge: number) {
-  const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
+  const forwardedProtocol = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const secure = new URL(request.url).protocol === "https:" || forwardedProtocol === "https" ? "; Secure" : "";
   return `${name}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 
@@ -81,7 +79,7 @@ export async function createNonce(request: Request) {
 
 async function getGoogleKeys() {
   if (cachedJwks && cachedJwks.expiresAt > Date.now()) return cachedJwks.value;
-  const response = await fetch("https://www.googleapis.com/oauth2/v3/certs", { cf: { cacheTtl: 600, cacheEverything: true } } as RequestInit);
+  const response = await fetch("https://www.googleapis.com/oauth2/v3/certs");
   if (!response.ok) throw new Error("Não foi possível validar a assinatura do Google.");
   const value = await response.json() as Jwks;
   cachedJwks = { value, expiresAt: Date.now() + 10 * 60 * 1000 };
@@ -148,4 +146,3 @@ export async function authorizedUser(request: Request) {
 }
 
 export function configuredClientId() { return envValue("GOOGLE_CLIENT_ID"); }
-
