@@ -1,12 +1,12 @@
 import { getDb } from "../../../../../db";
 import { clearRelayCookie, createSession, isAuthConfigured, verifyRelayState } from "../../../../../lib/auth";
-import { getSaml, profileText } from "../../../../../lib/saml";
+import { getSaml, portalUrl, profileText } from "../../../../../lib/saml";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function failed(request: Request, reason: string, status = 303) {
-  const response = Response.redirect(new URL(`/?sso=${reason}`, request.url), status);
+  const response = Response.redirect(portalUrl(`/?sso=${reason}`), status);
   response.headers.append("Set-Cookie", clearRelayCookie(request));
   response.headers.set("Cache-Control", "no-store");
   return response;
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const { response: sessionResponse, user } = await createSession(request, email, fullName);
     getDb().prepare("INSERT INTO portal_users (sub, name, email, last_seen_at) VALUES (?, ?, ?, ?) ON CONFLICT(sub) DO UPDATE SET name = excluded.name, email = excluded.email, last_seen_at = excluded.last_seen_at")
       .run(user.sub, user.name, user.email, Date.now());
-    const response = Response.redirect(new URL("/", request.url));
+    const response = Response.redirect(portalUrl("/"));
     for (const setCookie of sessionResponse.headers.getSetCookie()) response.headers.append("Set-Cookie", setCookie);
     response.headers.set("Cache-Control", "no-store");
     return response;

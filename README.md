@@ -32,12 +32,15 @@ O Google Workspace atua como provedor de identidade (IdP); o portal é o provedo
    SESSION_SECRET=gere-uma-chave-aleatoria-com-pelo-menos-32-caracteres
    ADMIN_EMAILS=lucas.salomao@casaeterra.com,Uarlei.silva@casaeterra.com
    DATABASE_PATH=/var/lib/treinamentos/treinamentos.sqlite
+   APP_BASE_URL=https://treinamentos.casaeterra.com
    SAML_SP_ENTITY_ID=https://treinamentos.casaeterra.com/saml/metadata
    SAML_ACS_URL=https://treinamentos.casaeterra.com/api/auth/saml/acs
    SAML_IDP_ENTRY_POINT=COLE_AQUI_O_URL_DE_SSO_DO_GOOGLE
    SAML_IDP_ISSUER=COLE_AQUI_O_ID_DA_ENTIDADE_DO_GOOGLE
    SAML_IDP_CERT_PATH=/etc/ssl/casa-terra/google-workspace-idp.crt
    ```
+
+   `APP_BASE_URL` precisa ser o endereço HTTPS público. O portal usa esse endereço nos retornos do login e rejeita um `SAML_ACS_URL` com outro domínio. Não configure o ACS como `localhost` para acesso dos colaboradores.
 
    Gere o segredo com `openssl rand -hex 32`. Instale o certificado IdP do Google separado do `CeT.crt`/`CeT.key` do Nginx. Por exemplo, use proprietário `root`, grupo `treinamentos` e modo `0640` para o certificado, e mantenha o arquivo `portal.env` fora do Git com modo `0640`.
 

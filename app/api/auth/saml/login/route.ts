@@ -1,11 +1,11 @@
 import { createRelayState, isAuthConfigured } from "../../../../../lib/auth";
-import { getSaml } from "../../../../../lib/saml";
+import { getSaml, portalUrl } from "../../../../../lib/saml";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  if (!isAuthConfigured()) return Response.redirect(new URL("/?sso=not-configured", request.url));
+  if (!isAuthConfigured()) return Response.redirect(portalUrl("/?sso=not-configured"));
   try {
     const { state, cookie } = await createRelayState();
     const target = await getSaml().getAuthorizeUrlAsync(state, undefined, {});
@@ -16,6 +16,6 @@ export async function GET(request: Request) {
     return response;
   } catch (error) {
     console.error("Falha ao iniciar SAML:", error);
-    return Response.redirect(new URL("/?sso=failed", request.url));
+    return Response.redirect(portalUrl("/?sso=failed"));
   }
 }
