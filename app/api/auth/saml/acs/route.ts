@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function failed(request: Request, reason: string, status = 303) {
-  const response = Response.redirect(portalUrl(`/?sso=${reason}`), status);
+  const response = new Response(null, { status, headers: { Location: portalUrl(`/?sso=${reason}`).toString() } });
   response.headers.append("Set-Cookie", clearRelayCookie(request));
   response.headers.set("Cache-Control", "no-store");
   return response;
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const { response: sessionResponse, user } = await createSession(request, email, fullName);
     getDb().prepare("INSERT INTO portal_users (sub, name, email, last_seen_at) VALUES (?, ?, ?, ?) ON CONFLICT(sub) DO UPDATE SET name = excluded.name, email = excluded.email, last_seen_at = excluded.last_seen_at")
       .run(user.sub, user.name, user.email, Date.now());
-    const response = Response.redirect(portalUrl("/"));
+    const response = new Response(null, { status: 303, headers: { Location: portalUrl("/").toString() } });
     for (const setCookie of sessionResponse.headers.getSetCookie()) response.headers.append("Set-Cookie", setCookie);
     response.headers.set("Cache-Control", "no-store");
     return response;
