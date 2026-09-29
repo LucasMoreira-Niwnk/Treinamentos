@@ -1,7 +1,8 @@
 export type TrainingMedia = { url: string; kind: "image" | "video"; name: string };
 export type ContentStep = { id: string; type: "content"; title: string; content: string; media?: TrainingMedia[] };
 export type QuizStep = { id: string; type: "quiz"; question: string; options: string[]; correctAnswer: number; explanation?: string };
-export type TrainingStep = ContentStep | QuizStep;
+export type CompletionStep = { id: string; type: "completion"; title: string; content: string; video?: TrainingMedia };
+export type TrainingStep = ContentStep | QuizStep | CompletionStep;
 
 export function parseTrainingSteps(value: string | unknown): TrainingStep[] {
   const parsed = typeof value === "string" ? JSON.parse(value) as unknown : value;
