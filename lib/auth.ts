@@ -101,7 +101,7 @@ export async function getPortalUser(request: Request): Promise<PortalUser | null
   try {
     const value = await unseal<PortalUser & { expires: number }>(cookie(request, "portal_session"));
     if (!value || value.expires <= Date.now() || !value.sub || !value.email) return null;
-    return { sub: value.sub, name: value.name, email: value.email, admin: isAdmin(value.email) };
+    return { sub: value.sub, name: displayNameFromEmail(value.email), email: value.email, admin: isAdmin(value.email) };
   } catch { return null; }
 }
 
