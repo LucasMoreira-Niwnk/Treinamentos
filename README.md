@@ -107,7 +107,15 @@ Os comandos abaixo assumem que o repositório foi criado no GitHub e que Node.js
    sudo systemctl reload nginx
    ```
 
-   A configuração do Nginx permite solicitações de até 105 MB para aceitar vídeos de até 100 MB. Se já houver outro limite definido no servidor, ajuste `client_max_body_size` no bloco HTTPS e recarregue o Nginx.
+   O Nginx está configurado para aceitar vídeos de até 700 MB (`client_max_body_size 720m`) e encaminhá-los em fluxo, sem guardar o corpo inteiro antes de chegar à aplicação. Depois de atualizar a aplicação, atualize também a configuração do Nginx no servidor:
+
+   ```bash
+   sudo install -m 0644 /opt/treinamentos/deploy/treinamentos.casaeterra.com.conf /etc/nginx/sites-available/treinamentos.casaeterra.com
+   sudo nginx -t
+   sudo systemctl reload nginx
+   ```
+
+   Confirme que `/var/lib/treinamentos/uploads` tem espaço livre suficiente para os vídeos e seus backups.
 
    O DNS de `treinamentos.casaeterra.com` precisa apontar para o servidor. A renovação do certificado continua sob responsabilidade do processo que já administra esses certificados na VM.
 

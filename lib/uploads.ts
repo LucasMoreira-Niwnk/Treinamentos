@@ -12,7 +12,8 @@ const extensions: Record<string, { mime: string; kind: "image" | "video" }> = {
 };
 
 export const imageLimit = 10 * 1024 * 1024;
-export const videoLimit = 100 * 1024 * 1024;
+export const videoLimit = 700 * 1024 * 1024;
+export const multipartVideoLimit = 100 * 1024 * 1024;
 
 export function uploadDirectory() {
   const path = process.env.UPLOADS_PATH?.trim();
