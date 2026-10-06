@@ -17,14 +17,14 @@ export async function POST(request: Request) {
     const course = db.prepare("SELECT id, lessons FROM training_courses WHERE id = ? AND active = 1").get(payload.courseId) as { id: string; lessons: string } | undefined;
     if (!course) return Response.json({ error: "Este treinamento não está mais disponível." }, { status: 404 });
     const quizSteps = parseTrainingSteps(course.lessons).filter((step) => step.type === "quiz");
-    if (quizSteps.length !== payload.answers.length || quizSteps.length === 0 || payload.answers.some((answer, index) => answer >= quizSteps[index].options.length)) {
+    if (quizSteps.length !== payload.answers.length || payload.answers.some((answer, index) => answer >= quizSteps[index].options.length)) {
       return Response.json({ error: "A avaliação do treinamento foi atualizada. Recarregue a página." }, { status: 409 });
     }
     const correct = quizSteps.reduce((total, step, index) => total + (payload.answers![index] === step.correctAnswer ? 1 : 0), 0);
     const total = quizSteps.length;
     const incorrect = total - correct;
-    const score = Math.round(correct / total * 100);
-    const passed = correct / total >= 0.75;
+    const score = total ? Math.round(correct / total * 100) : null;
+    const passed = total === 0 || correct / total >= 0.75;
     const results = quizSteps.map((step, index) => ({ question: step.question, selectedAnswer: payload.answers![index], correctAnswer: step.correctAnswer, correct: payload.answers![index] === step.correctAnswer, explanation: step.explanation ?? "" }));
     if (passed) {
       db.prepare("INSERT INTO training_completions (user_sub, course_id, user_email, score, completed_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_sub, course_id) DO UPDATE SET user_email = excluded.user_email, score = excluded.score, completed_at = excluded.completed_at")

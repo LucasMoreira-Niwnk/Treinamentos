@@ -23,7 +23,7 @@ export const completions = sqliteTable("training_completions", {
   userSub: text("user_sub").notNull(),
   courseId: text("course_id").notNull(),
   userEmail: text("user_email").notNull(),
-  score: integer("score").notNull(),
+  score: integer("score"),
   completedAt: integer("completed_at").notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.userSub, table.courseId] }),

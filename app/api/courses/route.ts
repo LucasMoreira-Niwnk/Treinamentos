@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   try {
     const input = parseCourseInput(await request.json());
     if (!input) {
-      return Response.json({ error: "Confira os dados e as etapas. Inclua conteúdo, perguntas e uma alternativa correta em cada quiz." }, { status: 400 });
+      return Response.json({ error: "Confira os dados e as etapas. Inclua pelo menos uma explicação ou pergunta e uma alternativa correta em cada quiz." }, { status: 400 });
     }
     const db = database();
     db.prepare("INSERT INTO training_courses (id, title, description, category, duration, cover_image, lessons, active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)")

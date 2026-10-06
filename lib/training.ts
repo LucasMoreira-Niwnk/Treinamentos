@@ -34,5 +34,5 @@ export async function listCoursesForUser(db: DatabaseSync, sub: string) {
   await seedCourses(db);
   const result = db.prepare("SELECT c.id, c.title, c.description, c.category, c.duration, c.cover_image, c.lessons, c.active, c.created_at, p.score, p.completed_at FROM training_courses c LEFT JOIN training_completions p ON p.course_id = c.id AND p.user_sub = ? WHERE c.active = 1 ORDER BY c.created_at, c.id")
     .all(sub) as unknown as (Omit<Course, "steps" | "coverImage"> & { cover_image: string; lessons: string; score: number | null; completed_at: number | null })[];
-  return result.map((course) => ({ ...course, coverImage: course.cover_image, steps: parseTrainingSteps(course.lessons), completed: course.score !== null && course.score >= 75 }));
+  return result.map((course) => ({ ...course, coverImage: course.cover_image, steps: parseTrainingSteps(course.lessons), completed: course.completed_at !== null && (course.score === null || course.score >= 75) }));
 }
